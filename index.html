@@ -1,42 +1,53 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>poly-decomp.js</title>
     <style>
         * {
-            margin:0;
-            padding:0;
+            margin: 0;
+            padding: 0;
         }
+        
         body {
             margin: 0px;
             padding: 0px;
             overflow: hidden;
             font: 13px Helvetica, arial, freesans, clean, sans-serif;
         }
-        p, h1 {
+        
+        p,
+        h1 {
             margin-bottom: 5px;
         }
+        
         #info {
             display: block;
-            background-color:#eee;
-            padding:10px;
+            background-color: #eee;
+            padding: 10px;
         }
     </style>
 </head>
+
 <body>
     <div id="info">
         <h1><a href="https://github.com/schteppe/poly-decomp.js">poly-decomp.js</a></h1>
-        <p>Decomposition of 2D polygons into convex pieces in JavaScript. See the <a href="https://github.com/schteppe/poly-decomp.js">Github repo</a> or <a href="docs">documentation</a>.</p>
+        <p>Decomposition of 2D polygons into convex pieces in JavaScript. See the <a href="https://github.com/schteppe/poly-decomp.js">Github repo</a>            or <a href="docs">documentation</a>.</p>
         <p>Try drawing a polygon below!</p>
+        <form action='#' onsubmit="return false;">
+            <input type='file' id='imgfile' />
+            <input type='button' id='btnLoad' value='Load' onclick='loadImage();' />
+        </form>
     </div>
 
     <script src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
     <script src="build/decomp.js"></script>
     <script src="dat.gui.js"></script>
     <script>
-    var path = [],
+        var path = [],
         polys = [],
         mousedown = false,
+        img = null,
         colors = ["#f99","#9f9","#99f","#ff9"];
 
     var canvas = document.createElement('canvas');
@@ -49,7 +60,11 @@
 
         // clear
         c.clearRect(0, 0, canvas.width, canvas.height);
-
+        
+        if(img){
+            c.drawImage(img, 0, 0);
+        }
+        
         c.fillStyle = "red";
         c.strokeStyle = "black";
 
@@ -105,13 +120,22 @@
         quickDecomp : true,
         removeCollinear:true,
         collinearThreshold:0.001,
+        loadImage : function() { 
+            console.log("loadImage called")
+        }
     };
     var gui = new dat.GUI();
     gui.add(settings, 'minEdgeLength', 1, 100);
     gui.add(settings, 'quickDecomp');
     gui.add(settings, 'removeCollinear');
     gui.add(settings, 'collinearThreshold',0,Math.PI/4);
-
+    gui.add(settings, 'loadImage');
+    
+    function imageLoaded() {
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img,0,0);
+    }
+    
     function getMousePos(e){
         var offset = $(e.target).offset();
         return [e.clientX - offset.left,e.clientY - offset.top];
@@ -154,7 +178,9 @@
                 else
                     polys = p.decomp();
                 console.log("Got "+polys.length+" slices. Done.");
-
+                for(var asd=0;asd<polys.length;asd++){
+                    console.log(polys[asd])
+                }
             } else {
                 console.log("The polygon was not simple. Aborting...");
             }
@@ -162,7 +188,42 @@
         path = [];
         render();
     });
+    function loadImage() {
+        var input, file, fr;
 
+        if (typeof window.FileReader !== 'function') {
+            write("The file API isn't supported on this browser yet.");
+            return;
+        }
+
+        input = document.getElementById('imgfile');
+        if (!input) {
+            write("Um, couldn't find the imgfile element.");
+        }
+        else if (!input.files) {
+            write("This browser doesn't seem to support the `files` property of file inputs.");
+        }
+        else if (!input.files[0]) {
+            write("Please select a file before clicking 'Load'");
+        }
+        else {
+            file = input.files[0];
+            fr = new FileReader();
+            fr.onload = createImage;
+            fr.readAsDataURL(file);
+        }
+
+        function createImage() {
+            img = new Image();
+            img.onload = imageLoaded;
+            img.src = fr.result;
+        }
+
+        function write(msg) {
+            console.log(msg)
+        }
+    }
     </script>
 </body>
+
 </html>
