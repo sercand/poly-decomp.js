@@ -56,8 +56,35 @@
     $("body").append(canvas);
 
 
+    function calculateSubPoints(){
+        console.log(settings.minEdgeLength)
+        var start = polys[0];
+        var end = polys[1];
+        
+        var sx = start[0];
+        var sy = start[1];
+        var ex = end[0];
+        var ey = end[1];
+        
+        var lngth= Math.sqrt(decomp.Point.sqdist(start,end));
+        var pi = Math.floor(lngth/settings.minEdgeLength)
+        var res = []
+        var step = lngth / pi
+        var angle = Math.atan2(ex - sx, ey - sy);
+        for(var i = 0; i < pi ; ++i){
+            var px = sx + (i * step) * Math.sin(angle);
+            var py = sy + (i * step) * Math.cos(angle);
+            res.push([Math.round(px * 100) / 100, Math.round(py * 100) / 100]);
+        }
+        res.push(end)
+        polys = res
+    }
+
     function printRender(){
         var res = []
+        if(polys.length==2){
+            calculateSubPoints()
+        }
         for(var i=0; i < polys.length; i++){
             var p = polys[i];
             res.push({x: p[0] , y: p[1]})
@@ -95,11 +122,12 @@
         collinearThreshold:0.001,
         clear : function() { 
             polys = [];
-            render();
             printRender();
+            render();
         }
     };
     var gui = new dat.GUI();
+    gui.add(settings, 'minEdgeLength', 1, 200);
     gui.add(settings, 'clear');
     
     function imageLoaded() {
@@ -117,7 +145,6 @@
         printRender();
         render();
     })
-    
     
     function loadImage() {
         var input, file, fr;
